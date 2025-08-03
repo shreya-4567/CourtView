@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Court Case Data Fetcher{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Information -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    Profile Information
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle fa-5x text-muted"></i>
+                </div>
+                <h4>{{ current_user.full_name or current_user.username }}</h4>
+                {% if current_user.organization %}
+                <p class="text-muted">{{ current_user.organization }}</p>
+                {% endif %}
+                <p class="mb-1"><strong>Username:</strong> {{ current_user.username }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ current_user.email }}</p>
+                {% if current_user.phone %}
+                <p class="mb-1"><strong>Phone:</strong> {{ current_user.phone }}</p>
+                {% endif %}
+                <p class="mb-3">
+                    <small class="text-muted">
+                        Member since {{ current_user.created_at.strftime('%B %Y') }}
+                    </small>
+                </p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i>
+                        Edit Profile
+                    </a>
+                    <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-key me-1"></i>
+                        Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Status -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Account Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <span class="badge bg-{{ 'success' if current_user.is_active else 'danger' }} mb-1">
+                            {{ 'Active' if current_user.is_active else 'Inactive' }}
+                        </span>
+                        <p class="small text-muted mb-0">Account Status</p>
+                    </div>
+                    <div class="col-6">
+                        <span class="badge bg-{{ 'success' if current_user.is_verified else 'warning' }} mb-1">
+                            {{ 'Verified' if current_user.is_verified else 'Pending' }}
+                        </span>
+                        <p class="small text-muted mb-0">Email Status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics & Activity -->
+    <div class="col-lg-8">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white text-center">
+                    <div class="card-body">
+                        <h3>{{ stats.total_searches }}</h3>
+                        <p class="mb-0">Total Searches</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white text-center">
+                    <div class="card-body">
+                        <h3>{{ stats.successful_searches }}</h3>
+                        <p class="mb-0">Successful</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white text-center">
+                    <div class="card-body">
+                        <h3>{{ "%.1f"|format(stats.success_rate) }}%</h3>
+                        <p class="mb-0">Success Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white text-center">
+                    <div class="card-body">
+                        <h3>{{ stats.favorite_cases|length }}</h3>
+                        <p class="mb-0">Favorites</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_searches %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Case Reference</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for search in stats.recent_searches %}
+                            <tr>
+                                <td>
+                                    <strong>{{ search.get_case_reference() }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if search.success else 'danger' }}">
+                                        {{ 'Success' if search.success else 'Failed' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ search.query_timestamp.strftime('%m/%d %I:%M %p') }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('toggle_favorite', case_id=search.id) }}" 
+                                       class="btn btn-sm btn-outline-{{ 'danger' if search.is_favorite else 'secondary' }}">
+                                        <i class="fas fa-heart"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <p>No search history yet. Start by searching for a case!</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Start Searching
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% if stats.recent_searches %}
+            <div class="card-footer text-center">
+                <a href="{{ url_for('search_history') }}" class="btn btn-outline-primary btn-sm">
+                    View All Search History
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Favorite Cases -->
+        {% if stats.favorite_cases %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-heart me-2 text-danger"></i>
+                    Favorite Cases
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for favorite in stats.favorite_cases %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ favorite.get_case_reference() }}</h6>
+                                {% if favorite.parties_names %}
+                                <p class="card-text small text-muted">
+                                    {{ favorite.parties_names[:80] }}...
+                                </p>
+                                {% endif %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ favorite.query_timestamp.strftime('%m/%d/%Y') }}
+                                    </small>
+                                    <a href="{{ url_for('toggle_favorite', case_id=favorite.id) }}" 
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-heart"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('favorites') }}" class="btn btn-outline-danger btn-sm">
+                    View All Favorites
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

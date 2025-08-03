@@ -1,227 +1,349 @@
 {% extends "base.html" %}
 
-{% block title %}Case Results - Court Case Data Fetcher{% endblock %}
+{% block title %}Search Results - Court Case Data Fetcher{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <!-- Search Summary -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-alt me-2"></i>
-                    Search Results
-                </h5>
-                <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i>
-                    New Search
-                </a>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Case Type:</strong><br>
-                        <span class="badge bg-secondary">{{ case.case_type }}</span>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Case Number:</strong><br>
-                        {{ case.case_number }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Filing Year:</strong><br>
-                        {{ case.filing_year }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Search Time:</strong><br>
-                        <small class="text-muted">{{ case.query_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         {% if case.success %}
-            <!-- Case Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Case Information
-                    </h6>
+            <!-- Success Result -->
+            <div class="card border-success">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Case Information Found
+                        </h4>
+                        <small class="opacity-75">{{ case.get_case_reference() }}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="toggleFavorite({{ case.id }})">
+                            <i class="fas fa-heart {{ 'text-danger' if case.is_favorite else '' }}"></i>
+                            {{ 'Remove from' if case.is_favorite else 'Add to' }} Favorites
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#noteModal">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Note
+                        </button>
+                    </div>
                 </div>
+                
                 <div class="card-body">
                     <div class="row">
-                        {% if case.parties_names %}
-                        <div class="col-md-6 mb-3">
-                            <h6><i class="fas fa-users me-2"></i>Parties</h6>
-                            <p class="mb-0">{{ case.parties_names }}</p>
+                        <!-- Case Details -->
+                        <div class="col-lg-8">
+                            <h5 class="text-success mb-3">Case Details</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Case Type:</strong></div>
+                                <div class="col-sm-8">{{ case.case_type }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Case Number:</strong></div>
+                                <div class="col-sm-8">{{ case.case_number }}</div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Filing Year:</strong></div>
+                                <div class="col-sm-8">{{ case.filing_year }}</div>
+                            </div>
+                            
+                            {% if case.parties_names %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Parties:</strong></div>
+                                <div class="col-sm-8">{{ case.parties_names }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.filing_date %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Filing Date:</strong></div>
+                                <div class="col-sm-8">{{ case.filing_date }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.next_hearing_date %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Next Hearing:</strong></div>
+                                <div class="col-sm-8">
+                                    <span class="badge bg-warning text-dark">{{ case.next_hearing_date }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.case_status %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Status:</strong></div>
+                                <div class="col-sm-8">
+                                    <span class="badge bg-info">{{ case.case_status }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.judge_name %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Judge:</strong></div>
+                                <div class="col-sm-8">{{ case.judge_name }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.court_hall %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Court Hall:</strong></div>
+                                <div class="col-sm-8">{{ case.court_hall }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if case.notes %}
+                            <div class="row mb-3">
+                                <div class="col-sm-4"><strong>Your Notes:</strong></div>
+                                <div class="col-sm-8">
+                                    <div class="alert alert-light">
+                                        {{ case.notes }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                         
-                        {% if case.case_status %}
-                        <div class="col-md-6 mb-3">
-                            <h6><i class="fas fa-flag me-2"></i>Status</h6>
-                            <p class="mb-0">{{ case.case_status }}</p>
+                        <!-- Search Information -->
+                        <div class="col-lg-4">
+                            <h5 class="text-muted mb-3">Search Information</h5>
+                            
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-6"><strong>Searched:</strong></div>
+                                        <div class="col-6 text-end">
+                                            <small>{{ case.query_timestamp.strftime('%m/%d/%Y %I:%M %p') }}</small>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if case.response_time %}
+                                    <div class="row mb-2">
+                                        <div class="col-6"><strong>Response Time:</strong></div>
+                                        <div class="col-6 text-end">
+                                            <small>{{ "%.2f"|format(case.response_time) }}s</small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="row">
+                                        <div class="col-6"><strong>Status:</strong></div>
+                                        <div class="col-6 text-end">
+                                            <small class="text-success">✓ Success</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        {% endif %}
-                        
-                        {% if case.filing_date %}
-                        <div class="col-md-6 mb-3">
-                            <h6><i class="fas fa-calendar-plus me-2"></i>Filing Date</h6>
-                            <p class="mb-0">{{ case.filing_date }}</p>
-                        </div>
-                        {% endif %}
-                        
-                        {% if case.next_hearing_date %}
-                        <div class="col-md-6 mb-3">
-                            <h6><i class="fas fa-calendar-check me-2"></i>Next Hearing</h6>
-                            <p class="mb-0">{{ case.next_hearing_date }}</p>
-                        </div>
-                        {% endif %}
                     </div>
-                    
-                    {% if not any([case.parties_names, case.filing_date, case.next_hearing_date, case.case_status]) %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Case was found but detailed information could not be extracted from the court website.
-                        This may be due to changes in the website structure or incomplete data entry.
-                    </div>
-                    {% endif %}
                 </div>
             </div>
-
+            
             <!-- PDF Documents -->
             {% if pdf_links %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="card-title mb-0">
+            <div class="card mt-4 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
                         <i class="fas fa-file-pdf me-2"></i>
                         Available Documents ({{ pdf_links|length }})
-                    </h6>
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         {% for pdf in pdf_links %}
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-secondary h-100">
                                 <div class="card-body">
-                                    <h6 class="card-title">
+                                    <h6 class="card-title text-truncate" title="{{ pdf.title }}">
                                         <i class="fas fa-file-pdf text-danger me-2"></i>
                                         {{ pdf.title }}
                                     </h6>
-                                    {% if pdf.type %}
-                                    <span class="badge bg-info mb-2">{{ pdf.type.title() }}</span>
-                                    {% endif %}
-                                    <div class="d-grid">
-                                        <a href="{{ pdf.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-external-link-alt me-1"></i>
-                                            View Document
-                                        </a>
-                                    </div>
+                                    <p class="card-text">
+                                        <small class="text-muted">{{ pdf.type or 'Document' }}</small>
+                                    </p>
+                                    <a href="{{ pdf.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        View/Download
+                                    </a>
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Note:</strong> PDF documents are hosted on the court website. 
-                        If a link doesn't work, the document may have been moved or is temporarily unavailable.
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
-                    <h6>No PDF Documents Found</h6>
-                    <p class="text-muted mb-0">
-                        No downloadable documents were found for this case. 
-                        Documents may be available through other court channels.
-                    </p>
                 </div>
             </div>
             {% endif %}
-
+            
         {% else %}
-            <!-- Error State -->
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                    <h5>Search Failed</h5>
-                    <p class="text-muted">{{ case.error_message or 'Unable to retrieve case information' }}</p>
+            <!-- Error Result -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Case Not Found
+                    </h4>
+                    <small class="opacity-75">{{ case.get_case_reference() }}</small>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Search Failed</h5>
+                        <p class="mb-0">{{ case.error_message or 'The case was not found in the court records.' }}</p>
+                    </div>
                     
-                    <div class="alert alert-warning text-start mt-4">
-                        <h6><i class="fas fa-lightbulb me-2"></i>Troubleshooting Tips:</h6>
-                        <ul class="mb-0">
-                            <li>Verify the case number format (numbers only)</li>
-                            <li>Ensure the case type is correct for your case</li>
-                            <li>Check if the filing year is accurate</li>
-                            <li>The case may not be available in the online system yet</li>
-                            <li>Try again later if the court website is experiencing issues</li>
-                        </ul>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Possible reasons:</h6>
+                            <ul class="mb-0">
+                                <li>Case number or filing year might be incorrect</li>
+                                <li>Case might not be available in online records</li>
+                                <li>Court website might be temporarily unavailable</li>
+                                <li>Case might be sealed or restricted</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Search Details</h6>
+                                    <small>
+                                        <strong>Searched:</strong><br>
+                                        {{ case.query_timestamp.strftime('%m/%d/%Y %I:%M %p') }}<br><br>
+                                        {% if case.response_time %}
+                                        <strong>Response Time:</strong><br>
+                                        {{ "%.2f"|format(case.response_time) }}s
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         {% endif %}
-
-        <!-- Raw Response (for debugging) -->
-        {% if case.raw_response and case.success %}
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-code me-2"></i>
-                    Technical Details
-                    <button class="btn btn-sm btn-outline-secondary float-end" type="button" 
-                            data-bs-toggle="collapse" data-bs-target="#rawResponse">
-                        <i class="fas fa-eye me-1"></i>View
-                    </button>
-                </h6>
-            </div>
-            <div class="collapse" id="rawResponse">
-                <div class="card-body">
-                    <small class="text-muted">
-                        Raw HTML response from the court website (for debugging purposes):
-                    </small>
-                    <pre class="bg-dark text-light p-3 mt-2" style="max-height: 300px; overflow-y: auto;"><code>{{ case.raw_response[:2000] }}{% if case.raw_response|length > 2000 %}...{% endif %}</code></pre>
-                </div>
+        
+        <!-- Action Buttons -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    New Search
+                </a>
+                <a href="{{ url_for('search_history') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-history me-1"></i>
+                    Search History
+                </a>
+                {% if case.success %}
+                <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#shareModal">
+                    <i class="fas fa-share-alt me-1"></i>
+                    Share Result
+                </button>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
     </div>
 </div>
+
+<!-- Note Modal -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sticky-note me-2"></i>
+                    Case Note
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_note', case_id=case.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Add your personal note about this case:</label>
+                        <textarea class="form-control" id="note" name="note" rows="4" 
+                                  placeholder="Enter your note here...">{{ case.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if case.success %}
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-share-alt me-2"></i>
+                    Share Case Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareUrl" class="form-label">Case Reference:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareRef" 
+                               value="{{ case.get_case_reference() }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('shareRef')">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Summary:</label>
+                    <textarea class="form-control" rows="4" readonly>Case: {{ case.get_case_reference() }}
+{% if case.parties_names %}Parties: {{ case.parties_names }}{% endif %}
+{% if case.filing_date %}Filed: {{ case.filing_date }}{% endif %}
+{% if case.case_status %}Status: {{ case.case_status }}{% endif %}
+Source: CourtFetch Pro</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Add copy functionality for case details
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        // Show success feedback
-        const toast = document.createElement('div');
-        toast.className = 'position-fixed top-0 end-0 p-3';
-        toast.style.zIndex = '1050';
-        toast.innerHTML = `
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check me-2"></i>Copied to clipboard!
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    });
+function toggleFavorite(caseId) {
+    window.location.href = '{{ url_for("toggle_favorite", case_id=0) }}'.replace('0', caseId);
 }
 
-// Add click handlers for copyable elements
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = element.nextElementSibling;
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalHTML;
+        button.classList.remove('btn-success');
+    }, 2000);
+}
+
+// Auto-expand textareas
 document.addEventListener('DOMContentLoaded', function() {
-    // Make case reference copyable
-    const caseRef = '{{ case.case_type }}/{{ case.case_number }}/{{ case.filing_year }}';
-    const title = document.querySelector('.card-title');
-    if (title) {
-        title.style.cursor = 'pointer';
-        title.title = 'Click to copy case reference';
-        title.addEventListener('click', () => copyToClipboard(caseRef));
-    }
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    });
 });
 </script>
 {% endblock %}

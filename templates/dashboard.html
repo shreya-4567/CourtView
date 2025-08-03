@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Court Case Data Fetcher{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">Welcome back, {{ current_user.full_name or current_user.username }}!</h2>
+                        <p class="mb-0 opacity-75">
+                            {% if current_user.organization %}
+                                {{ current_user.organization }} • 
+                            {% endif %}
+                            Last login: {{ current_user.last_login.strftime('%B %d, %Y at %I:%M %p') if current_user.last_login else 'First time!' }}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('auth.profile') }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-user me-1"></i>Profile
+                            </a>
+                            {% if current_user.username == 'admin' %}
+                            <a href="{{ url_for('analytics') }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-chart-bar me-1"></i>Analytics
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.total_searches or 0 }}</h3>
+                        <p class="mb-0">Total Searches</p>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="fas fa-search fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.successful_searches or 0 }}</h3>
+                        <p class="mb-0">Successful</p>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ "%.1f"|format(stats.success_rate or 0) }}%</h3>
+                        <p class="mb-0">Success Rate</p>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.favorite_cases|length or 0 }}</h3>
+                        <p class="mb-0">Favorites</p>
+                    </div>
+                    <div class="text-white-50">
+                        <i class="fas fa-heart fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Statistics (if admin user) -->
+{% if stats.system_stats %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-crown me-2"></i>
+                    System Statistics (Admin View)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-primary">{{ stats.system_stats.total_users }}</h4>
+                        <p class="text-muted mb-0">Total Users</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-success">{{ stats.system_stats.total_searches }}</h4>
+                        <p class="text-muted mb-0">All Searches</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-info">{{ stats.system_stats.successful_searches }}</h4>
+                        <p class="text-muted mb-0">Successful</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h4 class="text-warning">{{ stats.system_stats.recent_registrations }}</h4>
+                        <p class="text-muted mb-0">New Today</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Search Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Quick Search
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('search_case') }}" id="quickSearchForm">
+                    <div class="mb-3">
+                        <label for="case_type" class="form-label">Case Type</label>
+                        <select class="form-select" id="case_type" name="case_type" required>
+                            <option value="">Select Case Type</option>
+                            {% for code, description in case_types.items() %}
+                                <option value="{{ code }}">{{ code }} - {{ description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="case_number" class="form-label">Case Number</label>
+                            <input type="text" class="form-control" id="case_number" name="case_number" 
+                                   placeholder="e.g., 123" pattern="[0-9]+" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="filing_year" class="form-label">Filing Year</label>
+                            <input type="number" class="form-control" id="filing_year" name="filing_year" 
+                                   min="1950" max="{{ current_year }}" placeholder="e.g., 2024" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" id="searchBtn">
+                            <i class="fas fa-search me-1"></i>
+                            Search Case
+                        </button>
+                        <a href="{{ url_for('advanced_search') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-cogs me-1"></i>
+                            Advanced Search
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ url_for('search_history') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-history d-block mb-2"></i>
+                            Search History
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('favorites') }}" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-heart d-block mb-2"></i>
+                            Favorites
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-user d-block mb-2"></i>
+                            Profile
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-sign-out-alt d-block mb-2"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity Summary -->
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="text-muted mb-2">Recent Activity</h6>
+                    <div class="d-flex justify-content-between text-sm">
+                        <span>Last search:</span>
+                        <span class="text-muted">
+                            {% if stats.recent_searches %}
+                                {{ stats.recent_searches[0].query_timestamp.strftime('%m/%d at %I:%M %p') }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Searches -->
+{% if stats.recent_searches %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Recent Searches
+                </h5>
+                <a href="{{ url_for('search_history') }}" class="btn btn-outline-primary btn-sm">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Case Reference</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for search in stats.recent_searches %}
+                            <tr>
+                                <td>
+                                    <strong>{{ search.get_case_reference() }}</strong>
+                                    {% if search.parties_names %}
+                                        <br><small class="text-muted">{{ search.parties_names[:50] }}...</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if search.success %}
+                                        <span class="badge bg-success">Success</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ search.query_timestamp.strftime('%m/%d/%Y %I:%M %p') }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('toggle_favorite', case_id=search.id) }}" 
+                                           class="btn btn-outline-{{ 'danger' if search.is_favorite else 'secondary' }}">
+                                            <i class="fas fa-heart"></i>
+                                        </a>
+                                        {% if search.pdf_documents %}
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" 
+                                                data-bs-target="#documentsModal{{ search.id }}">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Favorite Cases -->
+{% if stats.favorite_cases %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-heart me-2 text-danger"></i>
+                    Favorite Cases
+                </h5>
+                <a href="{{ url_for('favorites') }}" class="btn btn-outline-danger btn-sm">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for favorite in stats.favorite_cases %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ favorite.get_case_reference() }}</h6>
+                                {% if favorite.parties_names %}
+                                    <p class="card-text small text-muted">{{ favorite.parties_names[:60] }}...</p>
+                                {% endif %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ favorite.query_timestamp.strftime('%m/%d/%Y') }}</small>
+                                    <a href="{{ url_for('toggle_favorite', case_id=favorite.id) }}" 
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-heart"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set current year for filing year input
+document.addEventListener('DOMContentLoaded', function() {
+    const currentYear = new Date().getFullYear();
+    document.getElementById('filing_year').max = currentYear;
+    document.getElementById('filing_year').value = currentYear;
+});
+
+// Add loading state to search button
+document.getElementById('quickSearchForm').addEventListener('submit', function() {
+    const searchBtn = document.getElementById('searchBtn');
+    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Searching...';
+    searchBtn.disabled = true;
+});
+
+// Validate case number input (numbers only)
+document.getElementById('case_number').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// Auto-save form data to localStorage
+const form = document.getElementById('quickSearchForm');
+const formFields = ['case_type', 'case_number', 'filing_year'];
+
+// Load saved form data
+formFields.forEach(fieldName => {
+    const savedValue = localStorage.getItem('quickSearch_' + fieldName);
+    if (savedValue && document.getElementById(fieldName)) {
+        document.getElementById(fieldName).value = savedValue;
+    }
+});
+
+// Save form data on change
+formFields.forEach(fieldName => {
+    const field = document.getElementById(fieldName);
+    if (field) {
+        field.addEventListener('change', function() {
+            localStorage.setItem('quickSearch_' + fieldName, this.value);
+        });
+    }
+});
+
+// Clear saved data on successful search
+if (window.location.search.includes('success')) {
+    formFields.forEach(fieldName => {
+        localStorage.removeItem('quickSearch_' + fieldName);
+    });
+}
+</script>
+{% endblock %}

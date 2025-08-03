@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Court Case Data Fetcher{% endblock %}</title>
+    <title>{% block title %}CourtFetch Pro{% endblock %}</title>
     
     <!-- Bootstrap CSS with Replit dark theme -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
@@ -13,23 +13,78 @@
     
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
                 <i class="fas fa-gavel me-2"></i>
-                Court Case Fetcher
+                CourtFetch Pro
             </a>
             
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('index') }}">
-                    <i class="fas fa-search me-1"></i>Search
-                </a>
-                <a class="nav-link" href="{{ url_for('search_history') }}">
-                    <i class="fas fa-history me-1"></i>History
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if current_user.is_authenticated %}
+                <div class="navbar-nav me-auto">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                    <a class="nav-link {{ 'active' if request.endpoint == 'search_history' }}" href="{{ url_for('search_history') }}">
+                        <i class="fas fa-history me-1"></i>History
+                    </a>
+                    <a class="nav-link {{ 'active' if request.endpoint == 'favorites' }}" href="{{ url_for('favorites') }}">
+                        <i class="fas fa-heart me-1"></i>Favorites
+                    </a>
+                    <a class="nav-link {{ 'active' if request.endpoint == 'advanced_search' }}" href="{{ url_for('advanced_search') }}">
+                        <i class="fas fa-search-plus me-1"></i>Advanced
+                    </a>
+                </div>
+                
+                <div class="navbar-nav">
+                    <!-- User Dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>
+                            {{ current_user.full_name or current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Account</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}">
+                                <i class="fas fa-key me-2"></i>Change Password
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if current_user.username == 'admin' %}
+                            <li><a class="dropdown-item" href="{{ url_for('analytics') }}">
+                                <i class="fas fa-chart-bar me-2"></i>Analytics
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% else %}
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login
+                    </a>
+                    <a class="nav-link" href="{{ url_for('auth.register') }}">
+                        <i class="fas fa-user-plus me-1"></i>Register
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </nav>

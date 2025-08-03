@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Court Case Data Fetcher{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-success text-white text-center py-4">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Create Account
+                </h3>
+                <p class="mb-0 opacity-75">Join the professional legal research platform</p>
+            </div>
+            
+            <div class="card-body p-5">
+                <form method="POST" id="registerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                Username <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   required minlength="3" autofocus
+                                   placeholder="Choose a username">
+                            <div class="form-text" id="usernameHelp"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>
+                                Email Address <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required
+                                   placeholder="your@email.com">
+                            <div class="form-text" id="emailHelp"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">
+                            <i class="fas fa-id-card me-1"></i>
+                            Full Name
+                        </label>
+                        <input type="text" class="form-control" id="full_name" name="full_name"
+                               placeholder="Your full name (optional)">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="organization" class="form-label">
+                            <i class="fas fa-building me-1"></i>
+                            Organization
+                        </label>
+                        <input type="text" class="form-control" id="organization" name="organization"
+                               placeholder="Law firm, company, etc. (optional)">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>
+                                Password <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       required minlength="8"
+                                       placeholder="Choose a strong password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <small>At least 8 characters</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i>
+                                Confirm Password <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                   required
+                                   placeholder="Confirm your password">
+                            <div class="form-text" id="passwordHelp"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" class="text-primary">Terms of Service</a> and 
+                                <a href="#" class="text-primary">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-success btn-lg" id="registerBtn">
+                            <i class="fas fa-user-plus me-2"></i>
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <p class="text-muted mb-3">Already have an account?</p>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Real-time validation
+let usernameTimeout, emailTimeout;
+
+// Check username availability
+document.getElementById('username').addEventListener('input', function() {
+    const username = this.value.trim();
+    const helpText = document.getElementById('usernameHelp');
+    
+    clearTimeout(usernameTimeout);
+    
+    if (username.length < 3) {
+        helpText.textContent = 'Username must be at least 3 characters';
+        helpText.className = 'form-text text-danger';
+        return;
+    }
+    
+    helpText.textContent = 'Checking availability...';
+    helpText.className = 'form-text text-muted';
+    
+    usernameTimeout = setTimeout(() => {
+        fetch(`{{ url_for('auth.check_username') }}?username=${encodeURIComponent(username)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.available) {
+                    helpText.textContent = '✓ Username available';
+                    helpText.className = 'form-text text-success';
+                } else {
+                    helpText.textContent = '✗ ' + data.message;
+                    helpText.className = 'form-text text-danger';
+                }
+            })
+            .catch(() => {
+                helpText.textContent = 'Error checking username';
+                helpText.className = 'form-text text-warning';
+            });
+    }, 500);
+});
+
+// Check email availability
+document.getElementById('email').addEventListener('input', function() {
+    const email = this.value.trim();
+    const helpText = document.getElementById('emailHelp');
+    
+    clearTimeout(emailTimeout);
+    
+    if (!email.includes('@')) {
+        helpText.textContent = '';
+        return;
+    }
+    
+    helpText.textContent = 'Checking availability...';
+    helpText.className = 'form-text text-muted';
+    
+    emailTimeout = setTimeout(() => {
+        fetch(`{{ url_for('auth.check_email') }}?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.available) {
+                    helpText.textContent = '✓ Email available';
+                    helpText.className = 'form-text text-success';
+                } else {
+                    helpText.textContent = '✗ ' + data.message;
+                    helpText.className = 'form-text text-danger';
+                }
+            })
+            .catch(() => {
+                helpText.textContent = 'Error checking email';
+                helpText.className = 'form-text text-warning';
+            });
+    }, 500);
+});
+
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    const helpText = document.getElementById('passwordHelp');
+    
+    if (confirmPassword === '') {
+        helpText.textContent = '';
+        return;
+    }
+    
+    if (password === confirmPassword) {
+        helpText.textContent = '✓ Passwords match';
+        helpText.className = 'form-text text-success';
+    } else {
+        helpText.textContent = '✗ Passwords do not match';
+        helpText.className = 'form-text text-danger';
+    }
+});
+
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+});
+
+// Form submission with loading state
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match');
+        return;
+    }
+    
+    const registerBtn = document.getElementById('registerBtn');
+    registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+    registerBtn.disabled = true;
+});
+
+// Password strength indicator
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strength = calculatePasswordStrength(password);
+    
+    // You can add a visual password strength indicator here
+});
+
+function calculatePasswordStrength(password) {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+}
+</script>
+{% endblock %}
