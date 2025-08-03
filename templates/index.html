@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Search Cases - Court Case Data Fetcher{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    Search Court Cases
+                </h4>
+                <small class="text-muted">Delhi High Court Case Information System</small>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Search Instructions:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Select the appropriate case type from the dropdown</li>
+                        <li>Enter the case number (numbers only, without prefixes)</li>
+                        <li>Provide the filing year (4 digits)</li>
+                        <li>Example: CRL.A / 123 / 2024</li>
+                    </ul>
+                </div>
+
+                <form method="POST" action="{{ url_for('search_case') }}" id="searchForm">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="case_type" class="form-label">
+                                <i class="fas fa-tags me-1"></i>
+                                Case Type
+                            </label>
+                            <select class="form-select" id="case_type" name="case_type" required>
+                                <option value="">Select Case Type</option>
+                                {% for code, description in case_types.items() %}
+                                    <option value="{{ code }}">{{ code }} - {{ description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="case_number" class="form-label">
+                                <i class="fas fa-hashtag me-1"></i>
+                                Case Number
+                            </label>
+                            <input type="text" class="form-control" id="case_number" name="case_number" 
+                                   placeholder="e.g., 123" pattern="[0-9]+" required>
+                            <div class="form-text">Numbers only</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="filing_year" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                Filing Year
+                            </label>
+                            <input type="number" class="form-control" id="filing_year" name="filing_year" 
+                                   min="1950" max="{{ current_year }}" placeholder="e.g., 2024" required>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary me-md-2" onclick="resetForm()">
+                            <i class="fas fa-undo me-1"></i>
+                            Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="searchBtn">
+                            <i class="fas fa-search me-1"></i>
+                            Search Case
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CAPTCHA Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    CAPTCHA Handling Strategy
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Current Implementation:</strong>
+                    <p class="mb-2">
+                        This application uses session management and form parsing to bypass basic security measures.
+                        If the court website implements CAPTCHA protection, the following strategies are employed:
+                    </p>
+                    <ul class="mb-0">
+                        <li><strong>Session Persistence:</strong> Maintains cookies and session state</li>
+                        <li><strong>Form Token Extraction:</strong> Automatically extracts hidden form fields</li>
+                        <li><strong>Rate Limiting:</strong> Implements delays between requests</li>
+                        <li><strong>User Agent Rotation:</strong> Uses legitimate browser headers</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Legal Compliance:</strong>
+                    This application only accesses publicly available information and respects the website's terms of service.
+                    All requests are made at reasonable intervals to avoid overloading the server.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetForm() {
+    document.getElementById('searchForm').reset();
+}
+
+// Add loading state to search button
+document.getElementById('searchForm').addEventListener('submit', function() {
+    const searchBtn = document.getElementById('searchBtn');
+    searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Searching...';
+    searchBtn.disabled = true;
+});
+
+// Set current year as default max
+document.addEventListener('DOMContentLoaded', function() {
+    const currentYear = new Date().getFullYear();
+    document.getElementById('filing_year').max = currentYear;
+    document.getElementById('filing_year').placeholder = `e.g., ${currentYear}`;
+});
+
+// Validate case number input (numbers only)
+document.getElementById('case_number').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
+{% endblock %}

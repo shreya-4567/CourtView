@@ -1,0 +1,140 @@
+/* Custom styles for Court Case Data Fetcher */
+
+/* Loading states */
+.btn.loading {
+    position: relative;
+}
+
+.btn.loading:disabled {
+    opacity: 0.7;
+}
+
+/* Card hover effects */
+.card {
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* PDF card styling */
+.card .card-body .btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.card .card-body .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Form validation styling */
+.form-control:invalid {
+    border-color: #dc3545;
+}
+
+.form-control:valid {
+    border-color: #198754;
+}
+
+/* Responsive text */
+@media (max-width: 768px) {
+    .card-title {
+        font-size: 1rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+    }
+}
+
+/* Code block styling */
+pre {
+    font-size: 0.8rem;
+    border-radius: 0.375rem;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.8em;
+}
+
+/* Alert custom styling */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* Navigation active state */
+.navbar-nav .nav-link.active {
+    font-weight: 600;
+}
+
+/* Footer styling */
+footer {
+    margin-top: auto;
+}
+
+/* Utility classes */
+.text-break {
+    word-break: break-word;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Form focus states */
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* PDF icon color */
+.text-pdf {
+    color: #dc3545 !important;
+}
+
+/* Status indicators */
+.status-success {
+    color: #198754;
+}
+
+.status-warning {
+    color: #ffc107;
+}
+
+.status-error {
+    color: #dc3545;
+}
+
+/* Responsive table */
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Custom scrollbar for code blocks */
+pre::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+pre::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+pre::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}

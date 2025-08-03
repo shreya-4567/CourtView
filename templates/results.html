@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Case Results - Court Case Data Fetcher{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Search Summary -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Search Results
+                </h5>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>
+                    New Search
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Case Type:</strong><br>
+                        <span class="badge bg-secondary">{{ case.case_type }}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Case Number:</strong><br>
+                        {{ case.case_number }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Filing Year:</strong><br>
+                        {{ case.filing_year }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Search Time:</strong><br>
+                        <small class="text-muted">{{ case.query_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if case.success %}
+            <!-- Case Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Case Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if case.parties_names %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-users me-2"></i>Parties</h6>
+                            <p class="mb-0">{{ case.parties_names }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if case.case_status %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-flag me-2"></i>Status</h6>
+                            <p class="mb-0">{{ case.case_status }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if case.filing_date %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-calendar-plus me-2"></i>Filing Date</h6>
+                            <p class="mb-0">{{ case.filing_date }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if case.next_hearing_date %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-calendar-check me-2"></i>Next Hearing</h6>
+                            <p class="mb-0">{{ case.next_hearing_date }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not any([case.parties_names, case.filing_date, case.next_hearing_date, case.case_status]) %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Case was found but detailed information could not be extracted from the court website.
+                        This may be due to changes in the website structure or incomplete data entry.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PDF Documents -->
+            {% if pdf_links %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Available Documents ({{ pdf_links|length }})
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for pdf in pdf_links %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                                        {{ pdf.title }}
+                                    </h6>
+                                    {% if pdf.type %}
+                                    <span class="badge bg-info mb-2">{{ pdf.type.title() }}</span>
+                                    {% endif %}
+                                    <div class="d-grid">
+                                        <a href="{{ pdf.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            View Document
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> PDF documents are hosted on the court website. 
+                        If a link doesn't work, the document may have been moved or is temporarily unavailable.
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                    <h6>No PDF Documents Found</h6>
+                    <p class="text-muted mb-0">
+                        No downloadable documents were found for this case. 
+                        Documents may be available through other court channels.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Error State -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h5>Search Failed</h5>
+                    <p class="text-muted">{{ case.error_message or 'Unable to retrieve case information' }}</p>
+                    
+                    <div class="alert alert-warning text-start mt-4">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Troubleshooting Tips:</h6>
+                        <ul class="mb-0">
+                            <li>Verify the case number format (numbers only)</li>
+                            <li>Ensure the case type is correct for your case</li>
+                            <li>Check if the filing year is accurate</li>
+                            <li>The case may not be available in the online system yet</li>
+                            <li>Try again later if the court website is experiencing issues</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Raw Response (for debugging) -->
+        {% if case.raw_response and case.success %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-code me-2"></i>
+                    Technical Details
+                    <button class="btn btn-sm btn-outline-secondary float-end" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#rawResponse">
+                        <i class="fas fa-eye me-1"></i>View
+                    </button>
+                </h6>
+            </div>
+            <div class="collapse" id="rawResponse">
+                <div class="card-body">
+                    <small class="text-muted">
+                        Raw HTML response from the court website (for debugging purposes):
+                    </small>
+                    <pre class="bg-dark text-light p-3 mt-2" style="max-height: 300px; overflow-y: auto;"><code>{{ case.raw_response[:2000] }}{% if case.raw_response|length > 2000 %}...{% endif %}</code></pre>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add copy functionality for case details
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success feedback
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed top-0 end-0 p-3';
+        toast.style.zIndex = '1050';
+        toast.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check me-2"></i>Copied to clipboard!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    });
+}
+
+// Add click handlers for copyable elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Make case reference copyable
+    const caseRef = '{{ case.case_type }}/{{ case.case_number }}/{{ case.filing_year }}';
+    const title = document.querySelector('.card-title');
+    if (title) {
+        title.style.cursor = 'pointer';
+        title.title = 'Click to copy case reference';
+        title.addEventListener('click', () => copyToClipboard(caseRef));
+    }
+});
+</script>
+{% endblock %}
